@@ -1,0 +1,125 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bangladesh Server Host</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #101827;
+  color: white;
+  padding: 20px;
+  max-width: 700px;
+  margin: auto;
+}
+.card {
+  background: #1e293b;
+  padding: 18px;
+  margin: 15px 0;
+  border-radius: 12px;
+}
+input, button {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px;
+  margin: 7px 0;
+  border-radius: 7px;
+  border: 0;
+}
+button {
+  background: #16a34a;
+  color: white;
+  font-weight: bold;
+}
+.small {
+  color: #cbd5e1;
+  overflow-wrap: anywhere;
+}
+</style>
+</head>
+<body>
+<h1>🇧🇩 BANGLADESH HOST</h1>
+<p>Create and manage your server entries.</p><div class="card">
+  <h2>Create Server</h2>
+  <form id="createForm">
+    <input id="name" placeholder="Server Name" maxlength="40" required>
+    <input id="port" type="number" min="1024" max="65535"
+      placeholder="Custom Port (optional)">
+    <button type="submit">CREATE SERVER</button>
+  </form>
+  <p id="message"></p>
+</div><h2>My Servers</h2>
+<div id="servers"></div><script>
+const list = document.getElementById("servers");
+const message = document.getElementById("message");
+
+async function loadServers() {
+  try {
+    const response = await fetch("/api/servers");
+    const data = await response.json();
+
+    list.replaceChildren();
+
+    data.forEach(server => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const title = document.createElement("h3");
+      title.textContent = server.name;
+
+      const details = document.createElement("p");
+      details.className = "small";
+      details.textContent =
+        `Address: ${server.address} | Port: ${server.port}`;
+
+      const status = document.createElement("p");
+      status.textContent = `Status: ${server.status}`;
+
+      card.append(title, details, status);
+      list.appendChild(card);
+    });
+  } catch {
+    message.textContent = "Unable to load server list.";
+  }
+}
+
+document.getElementById("createForm")
+.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const name = document.getElementById("name").value.trim();
+  const portValue = document.getElementById("port").value;
+
+  const payload = { name };
+
+  if (portValue !== "") {
+    payload.port = Number(portValue);
+  }
+
+  try {
+    const response = await fetch("/api/servers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      message.textContent = result.error || "Creation failed.";
+      return;
+    }
+
+    message.textContent =
+      `Entry created: ${result.name}, port ${result.port}`;
+
+    event.target.reset();
+    await loadServers();
+  } catch {
+    message.textContent = "Connection failed.";
+  }
+});
+
+loadServers();
+</script></body>
+</html>
